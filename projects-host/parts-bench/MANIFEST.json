@@ -1,0 +1,211 @@
+{
+  "pack": "Parts Bench handover data pack",
+  "generated": "2026-09-08",
+  "subject": "Local library for 3D printed parts, filament and print records. Bambu X1C / H2S / H2C plus Revo and aftermarket hotends.",
+  "readFirst": "START-HERE.md",
+  "verifyWith": "python3 tests/verify-model.py",
+  "runWith": "python3 src/partsbench/app.py --root <library folder>",
+  "requires": "Python 3.8+ and nothing else. Playwright only for the optional browser tests.",
+  "fileCount": 33,
+  "totalBytes": 692565,
+  "files": [
+    {
+      "path": "HANDOVER.md",
+      "bytes": 6491,
+      "sha256": "e249f6e9ae43d2ed",
+      "purpose": "Narrative record: what was built, what was verified, bugs and their causes, open items."
+    },
+    {
+      "path": "MANIFEST.json",
+      "bytes": 0,
+      "sha256": "self",
+      "purpose": ""
+    },
+    {
+      "path": "START-HERE.md",
+      "bytes": 6339,
+      "sha256": "607f2aff65c25cd2",
+      "purpose": "Read first. Complete orientation for whoever or whatever picks this up."
+    },
+    {
+      "path": "spec/api.json",
+      "bytes": 4158,
+      "sha256": "15fb790ab08054c9",
+      "purpose": "HTTP contract of the self-hosted server and the on-disk layout, including what is extracted from a 3MF."
+    },
+    {
+      "path": "spec/calibration.json",
+      "bytes": 5907,
+      "sha256": "83fad80a763ba160",
+      "purpose": "22 published reference points the model must reproduce, with expected results and tolerance."
+    },
+    {
+      "path": "spec/decisions.md",
+      "bytes": 3405,
+      "sha256": "e3cc594db6340029",
+      "purpose": "Decisions already settled and why. Read before changing anything."
+    },
+    {
+      "path": "spec/diagnostics.json",
+      "bytes": 67749,
+      "sha256": "dbbcee4649ee5780",
+      "purpose": "27 symptoms, 91 causes, fixes and next diagnostic steps, plus the context weighting rules."
+    },
+    {
+      "path": "spec/invariants.md",
+      "bytes": 2426,
+      "sha256": "8fd7f938c686a439",
+      "purpose": "What must stay true, and how to check each one."
+    },
+    {
+      "path": "spec/model.json",
+      "bytes": 24569,
+      "sha256": "ce440f46db57c641",
+      "purpose": "The physics model as data: constants, formulas, 3 printers, 4 hotend bodies, 21 materials, pressure-advance table, goal modifiers."
+    },
+    {
+      "path": "src/filament-bench.html",
+      "bytes": 249806,
+      "sha256": "381a1f5cc2575d06",
+      "purpose": "The hosted build, single file. Same engine, no file storage."
+    },
+    {
+      "path": "src/partsbench/README.md",
+      "bytes": 5089,
+      "sha256": "69f0cc2264baff15",
+      "purpose": "End-user documentation for running it."
+    },
+    {
+      "path": "src/partsbench/app.py",
+      "bytes": 40549,
+      "sha256": "403d277e7cbf6489",
+      "purpose": "Self-hosted server. Stdlib only: HTTP, SQLite, 3MF/STL parsing, pure-Python thumbnail rendering, file filing, change log."
+    },
+    {
+      "path": "src/partsbench/config.example.json",
+      "bytes": 54,
+      "sha256": "fcb7e692cd5f4f6a",
+      "purpose": "Config shape; the app writes its own config.json on first run."
+    },
+    {
+      "path": "src/partsbench/start.bat",
+      "bytes": 466,
+      "sha256": "86de741ccda6ae7a",
+      "purpose": "Windows launcher. Edit the LIBRARY line."
+    },
+    {
+      "path": "src/partsbench/start.sh",
+      "bytes": 190,
+      "sha256": "64429f120eec2ecc",
+      "purpose": "POSIX launcher."
+    },
+    {
+      "path": "src/partsbench/web/app.css",
+      "bytes": 22792,
+      "sha256": "5a047ba154d4f936",
+      "purpose": "Design tokens and component styles, light and dark."
+    },
+    {
+      "path": "src/partsbench/web/app.js",
+      "bytes": 199675,
+      "sha256": "bd62b0b0f2927ddf",
+      "purpose": "The whole client: physics engine, validation, drafts, all nine views."
+    },
+    {
+      "path": "src/partsbench/web/index.html",
+      "bytes": 14794,
+      "sha256": "98a71541f44b6990",
+      "purpose": "Markup shell."
+    },
+    {
+      "path": "tests/README.md",
+      "bytes": 2180,
+      "sha256": "b99803c80e42c785",
+      "purpose": "How to run the tests and what each covers."
+    },
+    {
+      "path": "tests/check.mjs",
+      "bytes": 1727,
+      "sha256": "a1913a853008d514",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/drafttest.mjs",
+      "bytes": 3660,
+      "sha256": "05e187eff5a72400",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/edittest.mjs",
+      "bytes": 3129,
+      "sha256": "5cb51aa04490d6a6",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/fixtures/bracket.3mf",
+      "bytes": 2448,
+      "sha256": "693fc06ba82f26cb",
+      "purpose": "Bambu-style project with plate render, slice_info.config and 82 settings keys."
+    },
+    {
+      "path": "tests/fixtures/cube20.stl",
+      "bytes": 684,
+      "sha256": "567bcc73287b9a7d",
+      "purpose": "Binary STL. Must measure exactly 20x20x20 mm and 8000.0 mm3."
+    },
+    {
+      "path": "tests/fixtures/plain.3mf",
+      "bytes": 716,
+      "sha256": "8bf81d5d8bbad383",
+      "purpose": "Plain 3MF with no slicer metadata; exercises the mesh-render fallback."
+    },
+    {
+      "path": "tests/flowtest.mjs",
+      "bytes": 3620,
+      "sha256": "097fce3bf1d2481c",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/partstest.mjs",
+      "bytes": 2880,
+      "sha256": "a45a188142c471a3",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/rectest.mjs",
+      "bytes": 1470,
+      "sha256": "708bcad779731764",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/typetest.mjs",
+      "bytes": 2870,
+      "sha256": "901317069daf3d0b",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/uitest.mjs",
+      "bytes": 3266,
+      "sha256": "383a8fc9e66e700b",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/valtest.mjs",
+      "bytes": 3951,
+      "sha256": "e06a40910e40768e",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    },
+    {
+      "path": "tests/verify-model.py",
+      "bytes": 3001,
+      "sha256": "5877def52c7610c6",
+      "purpose": "Dependency-free model check. Recomputes all 22 reference points from the spec. Run after any model change."
+    },
+    {
+      "path": "tests/verify3.mjs",
+      "bytes": 2504,
+      "sha256": "3ac42b60e81c22bb",
+      "purpose": "Playwright browser regression. See tests/README.md."
+    }
+  ]
+}

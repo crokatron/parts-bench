@@ -1,0 +1,237 @@
+{
+  "purpose": "Regression set for the flow model. Recompute each row with spec/model.json; every row must stay within 10% and the worst case at or under 8.8%.",
+  "acceptance": {
+    "allWithinPct": 10,
+    "worstCasePct": 8.8,
+    "rowCount": 22
+  },
+  "measuredWorstPct": 8.8,
+  "withinTenPct": 22,
+  "sources": {
+    "E3D Revo": "E3D published Revo volumetric flow-rate tables (60 W HeaterCore).",
+    "Bambu": "bambulab.com H2S/H2C/X1C specifications and wiki.bambulab.com volumetric-speed page."
+  },
+  "outOfSampleCheck": "The Bambu 0.6 high-flow row is not fitted: the model computes 48.4 mm3/s unclipped, which the standard hotend's 40 mm3/s rating clips to exactly the published 40.",
+  "rows": [
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "PLA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 13,
+      "modelMm3s": 13.0,
+      "errorPct": 0.0
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "PLA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 14,
+      "modelMm3s": 15.23,
+      "errorPct": 8.8
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "PLA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.8,
+      "publishedMm3s": 17,
+      "modelMm3s": 17.04,
+      "errorPct": 0.2
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "PLA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 16,
+      "modelMm3s": 15.99,
+      "errorPct": -0.1
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "PLA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 22,
+      "modelMm3s": 22.3,
+      "errorPct": 1.3
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "PLA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.8,
+      "publishedMm3s": 28,
+      "modelMm3s": 28.23,
+      "errorPct": 0.8
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "PETG",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 17,
+      "modelMm3s": 17.0,
+      "errorPct": 0.0
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "PETG",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 18,
+      "modelMm3s": 18.66,
+      "errorPct": 3.7
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "PETG",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.8,
+      "publishedMm3s": 20,
+      "modelMm3s": 19.94,
+      "errorPct": -0.3
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "PETG",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 27,
+      "modelMm3s": 26.97,
+      "errorPct": -0.1
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "PETG",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 31,
+      "modelMm3s": 32.77,
+      "errorPct": 5.7
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "PETG",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.8,
+      "publishedMm3s": 38,
+      "modelMm3s": 37.62,
+      "errorPct": -1.0
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "ASA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 15,
+      "modelMm3s": 15.0,
+      "errorPct": 0.0
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "ASA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 16,
+      "modelMm3s": 16.14,
+      "errorPct": 0.8
+    },
+    {
+      "source": "E3D Revo standard",
+      "hotendBody": "revo",
+      "material": "ASA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.8,
+      "publishedMm3s": 17,
+      "modelMm3s": 16.99,
+      "errorPct": -0.0
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "ASA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 26,
+      "modelMm3s": 26.01,
+      "errorPct": 0.1
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "ASA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 29,
+      "modelMm3s": 30.35,
+      "errorPct": 4.6
+    },
+    {
+      "source": "E3D Revo high-flow",
+      "hotendBody": "revo",
+      "material": "ASA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.8,
+      "publishedMm3s": 34,
+      "modelMm3s": 33.85,
+      "errorPct": -0.4
+    },
+    {
+      "source": "Bambu X1C",
+      "hotendBody": "x1c_stock",
+      "material": "PLA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 21,
+      "modelMm3s": 20.99,
+      "errorPct": -0.0
+    },
+    {
+      "source": "Bambu H2S standard hotend",
+      "hotendBody": "h2_stock",
+      "material": "PLA",
+      "nozzleClass": "standard",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 25,
+      "modelMm3s": 24.99,
+      "errorPct": -0.0
+    },
+    {
+      "source": "Bambu H2 high-flow nozzle",
+      "hotendBody": "h2_stock",
+      "material": "PLA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.4,
+      "publishedMm3s": 35,
+      "modelMm3s": 35.0,
+      "errorPct": 0.0
+    },
+    {
+      "source": "Bambu H2 high-flow nozzle",
+      "hotendBody": "h2_stock",
+      "material": "PLA",
+      "nozzleClass": "highflow",
+      "nozzleMm": 0.6,
+      "publishedMm3s": 40,
+      "modelMm3s": 40,
+      "errorPct": 0.0
+    }
+  ]
+}

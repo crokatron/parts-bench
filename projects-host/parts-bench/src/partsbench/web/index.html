@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Parts Bench</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>🧵</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand"><b>Parts Bench</b><span id="rootlabel">local library</span></div>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-view="library" aria-selected="true">Library</button>
+      <button class="tab" role="tab" data-view="parts" aria-selected="false">Parts</button>
+      <button class="tab" role="tab" data-view="recommend" aria-selected="false">Recommend</button>
+      <button class="tab" role="tab" data-view="diagnose" aria-selected="false">Diagnose</button>
+      <button class="tab" role="tab" data-view="compare" aria-selected="false">Compare</button>
+      <button class="tab" role="tab" data-view="hotends" aria-selected="false">Hotends</button>
+      <button class="tab" role="tab" data-view="history" aria-selected="false">History</button>
+      <button class="tab" role="tab" data-view="storage" aria-selected="false">Storage</button>
+      <button class="tab" role="tab" data-view="reference" aria-selected="false">Reference</button>
+    </nav>
+    <div class="sync"><span class="dot" id="syncdot"></span><span id="syncmsg">connecting…</span></div>
+  </div>
+</div>
+
+<main>
+  <!-- ================= LIBRARY ================= -->
+  <section class="view on" id="v-library">
+    <div class="viewhead">
+      <div>
+        <h2>Spool library</h2>
+        <p>Every spool by brand, type, colour and batch. Batch is the unit of truth — two spools of the same SKU from different lots do not print identically.</p>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="hintbtn" data-hint="import" data-slot="hint-library" aria-expanded="false" aria-label="How importing works">?</button>
+        <button class="btn" id="btn-import" title="Bring in a Bambu Studio filament preset — File → Export → Export Preset Bundle in the slicer first">Import profile</button>
+        <button class="btn primary" id="btn-add" title="Create a spool record: brand, type, colour, batch, and any settings that differ from the material default">Add spool</button>
+      </div>
+    </div>
+    <div id="hint-library"></div>
+    <div class="toolbar">
+      <input type="text" id="q" placeholder="Search brand, colour, batch…">
+      <select id="f-type"><option value="">All types</option></select>
+      <select id="f-brand"><option value="">All brands</option></select>
+      <select id="f-state">
+        <option value="">Any state</option>
+        <option value="measured">Flow measured</option>
+        <option value="unmeasured">Not measured</option>
+        <option value="abrasive">Abrasive</option>
+        <option value="wet">Needs drying</option>
+        <option value="rated">Rated</option>
+        <option value="unrated">Not rated</option>
+      </select>
+      <span style="flex:1"></span>
+      <button class="btn sm" id="btn-cleardrafts" style="display:none">Clear all drafts</button>
+      <span class="sub" id="count"></span>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th>Colour</th><th>Brand</th><th>Type</th><th>Batch</th><th>Opened</th>
+          <th>Quality</th><th>Measured flow</th><th>State</th>
+        </tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= PARTS ================= -->
+  <section class="view" id="v-parts">
+    <div class="viewhead">
+      <div>
+        <h2>Parts library</h2>
+        <p>Printed parts, their model files and every print run against them. Files are stored in your library folder; a Bambu Studio project also gives up its plate render, filament usage, print time and full slicer configuration on upload.</p>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="hintbtn" data-hint="parts" data-slot="hint-parts" aria-expanded="false" aria-label="How the parts library works">?</button>
+        <button class="btn" id="btn-verify" title="Check a file on disk against the fingerprints on record">Verify a file</button>
+        <button class="btn primary" id="btn-addpart" title="Create a part record, then attach a 3MF or STL to it">Add part</button>
+      </div>
+    </div>
+    <div id="hint-parts"></div>
+    <div class="toolbar">
+      <input type="text" id="pq" placeholder="Search parts, tags, file names…">
+      <span style="flex:1"></span>
+      <span class="sub" id="pcount"></span>
+    </div>
+    <div id="verify-panel" style="display:none; margin-bottom:14px">
+      <div class="panel"><header><h3>Verify a file</h3><button class="collapse" id="verify-close">Close</button></header>
+        <div class="body">
+          <div class="drop" id="verify-drop">
+            <b>Drop any file here</b>
+            <span class="sub">or <button class="linkbtn" id="verify-pick">choose a file</button></span>
+            <input type="file" id="verify-file" style="display:none">
+            <p class="hint" style="margin:9px 0 0">The file is hashed and matched against the SHA-256 recorded for every version, which tells you whether a copy somewhere else is byte-for-byte the one in the library.</p>
+          </div>
+          <div id="verify-out"></div>
+        </div>
+      </div>
+    </div>
+    <div id="part-grid"></div>
+  </section>
+
+  <!-- ================= RECOMMEND ================= -->
+  <section class="view" id="v-recommend">
+    <div class="viewhead">
+      <div>
+        <h2>Parameter recommendation</h2>
+        <p>Every number below is computed, not looked up. The derivation panel shows the substituted arithmetic so you can argue with it.</p>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="hintbtn" data-hint="recommend" data-slot="hint-rec" aria-expanded="false" aria-label="How the recommendation works">?</button>
+        <button class="btn" id="btn-savecfg" title="Store these inputs as a named configuration so you can line it up against others in Compare">Save as configuration</button>
+      </div>
+    </div>
+    <div id="hint-rec"></div>
+    <div class="grid" style="grid-template-columns:340px minmax(0,1fr); align-items:start" id="rec-layout">
+      <div class="panel">
+        <header><h3>Inputs</h3></header>
+        <div class="body grid" style="gap:13px">
+          <label class="f"><span>Spool</span><select id="r-spool"></select></label>
+          <label class="f"><span>Or material type</span><select id="r-mat"></select></label>
+          <label class="f"><span>Printer</span><select id="r-printer"></select></label>
+          <label class="f"><span>Hotend / nozzle</span><select id="r-hotend"></select></label>
+          <label class="f"><span>Goal</span><select id="r-goal">
+            <option value="balanced">Balanced</option>
+            <option value="speed">Throughput</option>
+            <option value="strength">Mechanical strength</option>
+            <option value="cosmetic">Surface finish</option>
+            <option value="accuracy">Dimensional accuracy</option>
+          </select></label>
+          <div class="grid g2" style="gap:10px">
+            <label class="f"><span>Layer height mm</span><input type="number" id="r-lh" value="0.20" step="0.01" min="0.04"></label>
+            <label class="f"><span>Line width mm</span><input type="number" id="r-lw" value="0.42" step="0.01" min="0.1"></label>
+          </div>
+          <div class="grid g2" style="gap:10px">
+            <label class="f"><span>Layer path mm</span><input type="number" id="r-path" value="900" step="50" min="20"></label>
+            <label class="f"><span>Part height mm</span><input type="number" id="r-h" value="60" step="5" min="1"></label>
+          </div>
+          <p class="hint">Layer path is the extruded length in a typical layer — used for the cooling-time check. A 60&nbsp;mm cube at 0.42&nbsp;mm width is roughly 900&nbsp;mm.</p>
+        </div>
+      </div>
+      <div id="rec-out" class="grid" style="gap:14px"></div>
+    </div>
+  </section>
+
+  <!-- ================= DIAGNOSE ================= -->
+  <section class="view" id="v-diagnose">
+    <div class="viewhead">
+      <div>
+        <h2>Fault diagnosis</h2>
+        <p>Written for a maintained machine. Kinematic and frame causes are ranked last on purpose; consumable wear, moisture and parameter drift are ranked first because that is what actually fails on a serviced fleet.</p>
+      </div>
+      <button class="hintbtn" data-hint="diagnose" data-slot="hint-diag" aria-expanded="false" aria-label="How ranking works">?</button>
+    </div>
+    <div id="hint-diag"></div>
+    <div class="panel" style="margin-bottom:14px">
+      <header><h3>Context</h3></header>
+      <div class="body grid g4" style="gap:12px">
+        <label class="f"><span>Spool</span><select id="d-spool"></select></label>
+        <label class="f"><span>Printer</span><select id="d-printer"></select></label>
+        <label class="f"><span>Hotend / nozzle</span><select id="d-hotend"></select></label>
+        <label class="f"><span>Onset</span><select id="d-onset">
+          <option value="new">New combination — never worked</option>
+          <option value="drift">Was fine, degraded over time</option>
+          <option value="sudden">Was fine, failed suddenly</option>
+          <option value="intermittent">Intermittent / part of the print only</option>
+        </select></label>
+      </div>
+    </div>
+    <div class="panel" style="margin-bottom:14px">
+      <header><h3>What are you seeing?</h3><span class="sub" id="d-count"></span></header>
+      <div class="body"><div class="symptoms" id="symptoms"></div></div>
+    </div>
+    <div id="diag-out"></div>
+  </section>
+
+  <!-- ================= COMPARE ================= -->
+  <section class="view" id="v-compare">
+    <div class="viewhead">
+      <div>
+        <h2>Compare configurations</h2>
+        <p>Line saved configurations up side by side. The leftmost column is the reference; every cell that differs from it is marked, so what actually changed between two jobs is visible without reading two profiles.</p>
+      </div>
+      <button class="hintbtn" data-hint="compare" data-slot="hint-cmp" aria-expanded="false" aria-label="How comparison works">?</button>
+    </div>
+    <div id="hint-cmp"></div>
+    <div class="panel" style="margin-bottom:14px">
+      <header><h3>Configurations</h3><span class="sub" id="cmp-count"></span></header>
+      <div class="body"><div class="chips" id="cmp-chips"></div></div>
+    </div>
+    <div id="cmp-out"></div>
+  </section>
+
+  <!-- ================= HOTENDS ================= -->
+  <section class="view" id="v-hotends">
+    <div class="viewhead">
+      <div>
+        <h2>Hotends &amp; nozzles</h2>
+        <p>Each entry carries an effective melt-zone volume, which is the single parameter the flow model runs on. Add your Revo and aftermarket combinations here; measure one, and the model predicts the rest.</p>
+      </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="hintbtn" data-hint="hotends" data-slot="hint-hot" aria-expanded="false" aria-label="How melt volume is used">?</button>
+        <button class="btn primary" id="btn-addhot" title="Register a hotend body, nozzle diameter, class and material — including Revo and aftermarket tips">Add combination</button>
+      </div>
+    </div>
+    <div id="hint-hot"></div>
+    <div id="hot-list" class="grid" style="gap:10px"></div>
+  </section>
+
+  <!-- ================= HISTORY ================= -->
+  <section class="view" id="v-history">
+    <div class="viewhead">
+      <div>
+        <h2>Change history</h2>
+        <p>Every save is diffed against what was there before, so the record shows which fields moved and what they moved from. Useful when a spool that printed well last month stops behaving.</p>
+      </div>
+    </div>
+    <div class="toolbar">
+      <input type="text" id="hq" placeholder="Search by name…">
+      <select id="h-kind">
+        <option value="">Everything</option>
+        <option value="spool">Spools</option>
+        <option value="part">Parts</option>
+        <option value="print">Print records</option>
+        <option value="hotend">Hotends</option>
+        <option value="config">Configurations</option>
+      </select>
+      <span style="flex:1"></span>
+      <span class="sub" id="hcount"></span>
+    </div>
+    <div id="hist-out"></div>
+  </section>
+
+  <!-- ================= STORAGE ================= -->
+  <section class="view" id="v-storage">
+    <div class="viewhead">
+      <div>
+        <h2>Library on disk</h2>
+        <p>Where every model file actually lives. The app owns this layout: uploads are filed into it, and renaming a part or changing its category moves the folder to match.</p>
+      </div>
+    </div>
+    <div id="store-out"></div>
+  </section>
+
+  <!-- ================= REFERENCE ================= -->
+  <section class="view" id="v-reference">
+    <div class="viewhead">
+      <div>
+        <h2>Model &amp; material reference</h2>
+        <p>The assumptions behind every recommendation, and the published figures they were calibrated against.</p>
+      </div>
+    </div>
+    <div id="ref-out" class="grid" style="gap:14px"></div>
+  </section>
+</main>
+
+<div class="scrim" id="scrim"></div>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Spool detail">
+  <header>
+    <h3 id="dr-title">Spool</h3>
+    <span class="pill warn" id="dr-draftchip" style="display:none">unsaved</span>
+    <button class="btn ghost sm" id="dr-pin" title="Dock this panel so it stays open while you move between tabs">Pin</button>
+    <button class="btn ghost sm" id="dr-close" aria-label="Close">Close</button>
+  </header>
+  <div class="dtabs" id="dr-tabs"></div>
+  <div class="dbody" id="dr-body"></div>
+  <footer>
+    <button class="btn danger" id="dr-del">Delete</button>
+    <button class="btn" id="dr-discard">Discard changes</button>
+    <span style="flex:1"></span>
+    <span class="sub" id="dr-vcount"></span>
+    <button class="btn primary" id="dr-save">Save spool</button>
+  </footer>
+</div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>

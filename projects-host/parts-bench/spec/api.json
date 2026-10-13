@@ -1,0 +1,99 @@
+{
+  "purpose": "HTTP contract of the self-hosted Parts Bench server (src/partsbench/app.py). No auth: the server trusts anything that can reach the port.",
+  "baseUrl": "http://<host>:8770",
+  "conventions": {
+    "storage": "Every collection row is a JSON blob in SQLite keyed by id. The client model and the stored model are the same shape, which is why the UI needed almost no change when it moved off the hosted database.",
+    "history": "The server diffs before/after on every write and appends to a bounded per-target log. The client never writes history.",
+    "uploads": "Raw request body with the filename in the query string, not multipart - a multipart parser was not worth hand-writing with no dependencies available."
+  },
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/state",
+      "returns": "{spools, hotends, configs, parts, versions{partId:[...]}, prints, history, meta, settings{root, layout}}",
+      "note": "One payload; the client holds no other source of truth."
+    },
+    {
+      "method": "PUT",
+      "path": "/api/{collection}/{id}",
+      "collections": [
+        "spools",
+        "hotends",
+        "configs",
+        "parts",
+        "prints"
+      ],
+      "body": "the full record as JSON",
+      "returns": "{ok, moved, record}",
+      "note": "moved is set when a part rename or category change relocated its folder on disk."
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/{collection}/{id}",
+      "note": "Deleting a part also erases its versions, prints, files and folder."
+    },
+    {
+      "method": "POST",
+      "path": "/api/parts/{partId}/versions?name={filename}",
+      "body": "raw file bytes",
+      "returns": "{ok, version}",
+      "note": "Parses, files to disk, renders the thumbnail, records the SHA-256."
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/parts/{partId}/versions/{versionId}"
+    },
+    {
+      "method": "GET",
+      "path": "/api/thumb/{versionId}.png"
+    },
+    {
+      "method": "GET",
+      "path": "/api/file/{versionId}",
+      "note": "Downloads the original model file."
+    },
+    {
+      "method": "POST",
+      "path": "/api/verify?name={filename}",
+      "body": "raw file bytes",
+      "returns": "{hash, name, match|null}",
+      "note": "Hashed server-side deliberately: crypto.subtle is unavailable over plain http to a LAN address, so browser-side hashing would fail on every machine except the host."
+    },
+    {
+      "method": "POST",
+      "path": "/api/scan",
+      "body": "{path, category}",
+      "returns": "{ok, found, added, skipped, names}",
+      "note": "Walks a folder, files every .stl/.3mf, skips anything whose fingerprint is already known."
+    },
+    {
+      "method": "GET",
+      "path": "/api/storage",
+      "returns": "{root, bytes, files, free, categories[], missing[], layout}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/reveal",
+      "body": "{path}",
+      "note": "Opens the folder in the host OS file manager."
+    },
+    {
+      "method": "PUT",
+      "path": "/api/meta/{key}",
+      "note": "Currently only 'scale' - the seven quality-step labels."
+    }
+  ],
+  "onDiskLayout": {
+    "pattern": "<library root>/<Category>/<Part>/v<n>/<file>",
+    "sidecar": "<library root>/<Category>/<Part>/part.json - human-readable index of versions, fingerprints and print history",
+    "internal": "<library root>/_bench/bench.db and _bench/thumbs/<versionId>.png",
+    "rule": "The app owns this layout. Renaming a part or changing its category moves the folder and rewrites every version's relPath."
+  },
+  "threeMfExtraction": {
+    "Metadata/plate_1.png": "slicer plate render, preferred thumbnail source",
+    "Metadata/slice_info.config": "filament grams and metres, print time prediction, printer model id, nozzle diameter, per-filament type and colour",
+    "Metadata/project_settings.config": "every slicer key; 22 are surfaced, all are retained",
+    "3D/3dmodel.model": "mesh, for bounding box and solid volume; build item transforms are applied",
+    "fallback": "No slicer metadata means a plain export - the thumbnail is then rendered from the mesh in pure Python."
+  }
+}

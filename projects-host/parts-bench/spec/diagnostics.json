@@ -1,0 +1,1808 @@
+{
+  "purpose": "Symptom-to-cause corpus for FDM fault diagnosis, written for a competent technician on a maintained machine.",
+  "rankingModel": {
+    "base": "Each cause carries a baseWeight. Selecting several symptoms accumulates weight for causes that explain more than one (subsequent hits add at 0.75x).",
+    "contextFlags": {
+      "hygro": "x1.35 for hygroscopic materials, x0.75 otherwise",
+      "abrasive": "x1.3 for filled materials, x0.7 otherwise; a further x1.4 when nozzle wear exceeds 80% of expected bore life",
+      "needsChamber": "x1.4 when the material wants a chamber and the printer has no active heater",
+      "mech": "x0.55 always - mechanical causes are deliberately demoted on a maintained fleet",
+      "multi": "x1.3 on a multi-material machine, x0.6 otherwise",
+      "drift": "x1.45 when onset is gradual, x0.7 when sudden",
+      "sudden": "x1.4 when onset is sudden, x0.85 otherwise"
+    },
+    "newCombination": "drift and sudden causes are both x0.6 when the user reports the combination never worked"
+  },
+  "fixDirections": {
+    "up": "increase",
+    "down": "decrease",
+    "set": "set or enable",
+    "act": "physical action"
+  },
+  "symptomCount": 27,
+  "causeCount": 91,
+  "symptoms": [
+    {
+      "id": "stringing",
+      "label": "Stringing and oozing",
+      "hint": "Fine strands between islands",
+      "causes": [
+        {
+          "cause": "Moisture in the filament",
+          "baseWeight": 0.9,
+          "contextFlags": [
+            "hygro"
+          ],
+          "why": "Absorbed water flashes to steam in the melt zone and drives filament out of the nozzle during travel. It is the single most common cause of stringing on a machine whose retraction is already tuned.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Dry",
+              "action": "Dry at the material\\'s drying temperature for the full cycle, then re-run the same print without touching retraction"
+            },
+            {
+              "direction": "set",
+              "delta": "Check",
+              "action": "Extrude 100 mm in air and listen \u2014 steam ticking or a wandering strand confirms it"
+            }
+          ],
+          "nextDiagnostic": "Print a two-tower retraction test straight after drying. If stringing is gone, the parameters were never wrong."
+        },
+        {
+          "cause": "Nozzle temperature above the material's flow window",
+          "baseWeight": 0.75,
+          "contextFlags": [],
+          "why": "Lower viscosity means the melt drains under its own head pressure faster than retraction can hold it.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221210 \u00b0C",
+              "action": "nozzle_temperature, keeping the first layer where it is"
+            },
+            {
+              "direction": "down",
+              "delta": "\u22125 \u00b0C",
+              "action": "repeat if strings persist and layer adhesion still passes a snap test"
+            }
+          ],
+          "nextDiagnostic": "Temperature tower in 5 \u00b0C steps across the material range, judged on strings and on layer bonding together."
+        },
+        {
+          "cause": "Retraction too short for this melt-zone volume",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "Retraction has to unload the compressed melt column. A larger melt zone stores more, so a value tuned on one hotend does not transfer to another.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+0.2 mm",
+              "action": "filament_retraction_length, to a ceiling of about 1.5 mm on direct drive"
+            },
+            {
+              "direction": "up",
+              "delta": "+5 mm/s",
+              "action": "filament_retraction_speed if the extruder is not skipping"
+            }
+          ],
+          "nextDiagnostic": "Retraction tower, 0.4 \u2192 1.4 mm. Stop at the first value that is clean; longer is not better and invites clogs."
+        },
+        {
+          "cause": "Travel avoiding the wipe",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "Without a wipe move the pressure that remains after retraction lands on the next seam as a strand.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "On",
+              "action": "filament_wipe"
+            },
+            {
+              "direction": "up",
+              "delta": "+2 mm",
+              "action": "filament_wipe_distance"
+            }
+          ],
+          "nextDiagnostic": "Slice one layer and inspect the travel preview for retract-then-move ordering."
+        },
+        {
+          "cause": "Partially blocked nozzle",
+          "baseWeight": 0.35,
+          "contextFlags": [
+            "drift"
+          ],
+          "why": "A partial obstruction raises the pressure the retraction has to relieve and leaves residual ooze even at correct settings.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Cold pull",
+              "action": "Two cold pulls at the material's softening point, then inspect the tip"
+            },
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Swap the nozzle if the pulls come out with carbon flecks"
+            }
+          ],
+          "nextDiagnostic": "Weigh a 100 mm extrusion at a known flow. Under-delivery of more than 4% points at the nozzle, not the settings."
+        }
+      ]
+    },
+    {
+      "id": "blobs",
+      "label": "Blobs, zits and seam bulges",
+      "hint": "Raised dots on the outer wall",
+      "causes": [
+        {
+          "cause": "Pressure advance too low",
+          "baseWeight": 0.85,
+          "contextFlags": [],
+          "why": "Without enough advance the extruder does not unload before a stop, so the residual pressure deposits at the seam.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+0.004",
+              "action": "pressure advance / k factor"
+            },
+            {
+              "direction": "set",
+              "delta": "Run",
+              "action": "Bambu flow-dynamics calibration for this specific spool, not the SKU"
+            }
+          ],
+          "nextDiagnostic": "PA pattern test. Read the line where the corner deposit disappears without the corner going hollow."
+        },
+        {
+          "cause": "Seam placement on a visible face",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "The seam is a real artefact of a stop-start; moving it is cheaper than eliminating it.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Scarf",
+              "action": "filament_scarf_seam_type to a scarf joint"
+            },
+            {
+              "direction": "act",
+              "delta": "Move",
+              "action": "Set seam painting to a rear or internal edge"
+            }
+          ],
+          "nextDiagnostic": "Print the same wall with scarf seam on and off, side by side."
+        },
+        {
+          "cause": "Retraction restart extra overfeeding",
+          "baseWeight": 0.45,
+          "contextFlags": [],
+          "why": "Restart extra compensates for ooze; when ooze is already controlled it becomes an over-extrusion at every restart.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u2192 0",
+              "action": "filament_retract_restart_extra"
+            }
+          ],
+          "nextDiagnostic": "Single-wall vase print \u2014 restart artefacts show up unmistakably."
+        },
+        {
+          "cause": "Wet filament boiling at the seam pause",
+          "baseWeight": 0.4,
+          "contextFlags": [
+            "hygro"
+          ],
+          "why": "Dwell time at the seam gives steam a moment to form a bubble that bursts as the head moves off.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Dry",
+              "action": "Full drying cycle before touching PA"
+            }
+          ],
+          "nextDiagnostic": "Compare a seam close-up before and after drying."
+        }
+      ]
+    },
+    {
+      "id": "corner_bulge",
+      "label": "Corner bulging",
+      "hint": "Walls fatten at direction changes",
+      "causes": [
+        {
+          "cause": "Pressure advance too low",
+          "baseWeight": 0.95,
+          "contextFlags": [],
+          "why": "The melt column stays compressed through the deceleration, so the slow-moving nozzle lays down more material than the geometry asks for.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+0.006",
+              "action": "k factor, then bisect"
+            },
+            {
+              "direction": "set",
+              "delta": "Run",
+              "action": "Flow-dynamics calibration per spool"
+            }
+          ],
+          "nextDiagnostic": "PA line test at your actual print acceleration \u2014 PA measured at a different acceleration will not transfer."
+        },
+        {
+          "cause": "Acceleration set higher than the PA value was tuned at",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "Advance compensation scales with the rate of velocity change; retuning acceleration invalidates the k factor.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Retune",
+              "action": "Re-run PA calibration at the acceleration the profile actually uses"
+            }
+          ],
+          "nextDiagnostic": "Note the acceleration on the calibration print so the pair stays together."
+        },
+        {
+          "cause": "Over-extrusion masking as a corner defect",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "If flow ratio is high everywhere, corners are simply where it becomes visible first.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u22120.02",
+              "action": "filament_flow_ratio"
+            }
+          ],
+          "nextDiagnostic": "Single-wall cube, measure the wall with a micrometer at mid-height and compare to line width."
+        }
+      ]
+    },
+    {
+      "id": "underextrusion",
+      "label": "Under-extrusion, gaps between lines",
+      "hint": "Visible voids in walls and top",
+      "causes": [
+        {
+          "cause": "Commanded flow above the hotend's melt ceiling",
+          "baseWeight": 0.9,
+          "contextFlags": [],
+          "why": "Past the melt rate the hotend can supply, the extruder skips or the melt leaves the nozzle short. This is the ceiling the Recommend tab computes.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "Set",
+              "action": "filament_max_volumetric_speed to the computed ceiling for this hotend and nozzle"
+            },
+            {
+              "direction": "up",
+              "delta": "+10 \u00b0C",
+              "action": "nozzle_temperature if there is headroom in the material range"
+            }
+          ],
+          "nextDiagnostic": "Run the flow-rate test in the Recommend tab's derivation, then record the measured value against the spool."
+        },
+        {
+          "cause": "Worn nozzle bore",
+          "baseWeight": 0.7,
+          "contextFlags": [
+            "abrasive",
+            "drift"
+          ],
+          "why": "An abraded orifice goes oval and oversize; the slicer's line width no longer matches what the nozzle lays down, and the deficit shows as gaps.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Fit a fresh nozzle of the same size and class"
+            },
+            {
+              "direction": "act",
+              "delta": "Log",
+              "action": "Record kilograms through the nozzle in the Hotends tab"
+            }
+          ],
+          "nextDiagnostic": "Print a single-wall cube before and after the swap and measure both. A width change of more than 0.03 mm confirms wear."
+        },
+        {
+          "cause": "Partial clog",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "Carbonised material narrows the bore and throttles flow before the extruder complains.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Cold pull",
+              "action": "Cold pull twice, then a purge at 20 \u00b0C above normal"
+            },
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Replace if pulls come out discoloured"
+            }
+          ],
+          "nextDiagnostic": "Weigh 100 mm of extrusion at a known volumetric rate; compare to filament cross-section \u00d7 length \u00d7 density."
+        },
+        {
+          "cause": "Flow ratio calibrated on a different batch",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "Diameter tolerance and pigment loading vary lot to lot; a flow ratio is a per-batch number, not a per-brand one.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Recalibrate",
+              "action": "filament_flow_ratio for this batch"
+            },
+            {
+              "direction": "act",
+              "delta": "Measure",
+              "action": "Ten diameter readings along a metre of filament"
+            }
+          ],
+          "nextDiagnostic": "Flow calibration cube for this batch, then store the value against the batch in the library."
+        },
+        {
+          "cause": "Extruder gear slipping on soft or dusty filament",
+          "baseWeight": 0.3,
+          "contextFlags": [],
+          "why": "Grip loss delivers less than the commanded length without any error being raised.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Clean",
+              "action": "Clean the drive gear teeth"
+            },
+            {
+              "direction": "down",
+              "delta": "\u221215%",
+              "action": "commanded flow while testing whether skipping stops"
+            }
+          ],
+          "nextDiagnostic": "Mark the filament 100 mm above the entry, command 100 mm, measure what actually fed."
+        }
+      ]
+    },
+    {
+      "id": "overextrusion",
+      "label": "Over-extrusion, rough top, elephant foot",
+      "hint": "Surfaces proud, first layer squashed wide",
+      "causes": [
+        {
+          "cause": "Flow ratio high for this batch",
+          "baseWeight": 0.85,
+          "contextFlags": [],
+          "why": "Flow ratio is the direct multiplier on extruded volume; a batch with slightly oversize filament pushes more than the model assumes.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u22120.02",
+              "action": "filament_flow_ratio"
+            },
+            {
+              "direction": "act",
+              "delta": "Measure",
+              "action": "Filament diameter at ten points and set filament_diameter to the mean"
+            }
+          ],
+          "nextDiagnostic": "Flow calibration cube; measure the top surface flatness rather than the wall."
+        },
+        {
+          "cause": "First-layer squish set for a different plate",
+          "baseWeight": 0.55,
+          "contextFlags": [],
+          "why": "Textured, engineering and Supertack plates sit at different effective heights; a Z offset tuned on one over-squashes on another.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Adjust",
+              "action": "Z offset for the plate actually installed"
+            },
+            {
+              "direction": "set",
+              "delta": "Match",
+              "action": "the plate-specific bed temperature key"
+            }
+          ],
+          "nextDiagnostic": "First-layer patch test on the plate in use."
+        },
+        {
+          "cause": "Nozzle temperature high enough to slump the bead",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "An over-hot bead spreads after deposition and reads as over-extrusion even at correct flow.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221210 \u00b0C",
+              "action": "nozzle_temperature"
+            }
+          ],
+          "nextDiagnostic": "Temperature tower judged on top-surface finish."
+        }
+      ]
+    },
+    {
+      "id": "adhesion",
+      "label": "Poor layer adhesion, parts split under load",
+      "hint": "Clean break along a layer line",
+      "causes": [
+        {
+          "cause": "Cooling too aggressive for the material",
+          "baseWeight": 0.85,
+          "contextFlags": [],
+          "why": "Interlayer strength is diffusion across the weld, and diffusion needs time above the glass transition. Fan robs exactly that time.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221220%",
+              "action": "fan_max_speed and fan_min_speed"
+            },
+            {
+              "direction": "down",
+              "delta": "Lower",
+              "action": "overhang_fan_speed, accepting softer overhangs"
+            }
+          ],
+          "nextDiagnostic": "Print two identical tensile bars at the current and reduced fan, and break both."
+        },
+        {
+          "cause": "Nozzle temperature at the bottom of the window",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "Weld strength rises steeply with melt temperature until degradation sets in. Most adhesion complaints are a 15 \u00b0C problem.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+15 \u00b0C",
+              "action": "nozzle_temperature, staying inside nozzle_temperature_range_high"
+            },
+            {
+              "direction": "up",
+              "delta": "+5 \u00b0C",
+              "action": "again if the break is still along the layer"
+            }
+          ],
+          "nextDiagnostic": "Temperature tower broken by hand at each step rather than inspected visually."
+        },
+        {
+          "cause": "Chamber too cold for an amorphous engineering polymer",
+          "baseWeight": 0.7,
+          "contextFlags": [
+            "needsChamber"
+          ],
+          "why": "Below the material's glass transition the previous layer has already vitrified when the next arrives, so the weld never forms properly.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "chamber_temperatures toward the material's guidance"
+            },
+            {
+              "direction": "act",
+              "delta": "Close",
+              "action": "Door and top closed for the whole print, not just the start"
+            }
+          ],
+          "nextDiagnostic": "Same part, chamber cold versus hot, broken and compared."
+        },
+        {
+          "cause": "Moisture degrading the weld",
+          "baseWeight": 0.55,
+          "contextFlags": [
+            "hygro"
+          ],
+          "why": "Hydrolysis shortens polymer chains in polyesters and polyamides; the material extrudes but never regains strength.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Dry",
+              "action": "Full drying cycle, then print from a heated or desiccated feed"
+            }
+          ],
+          "nextDiagnostic": "Break a bar printed from dried stock against one from the open spool."
+        },
+        {
+          "cause": "Line width too narrow to bond",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "A thin bead has less contact area with the layer below.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "\u2192 0.42\u20130.48",
+              "action": "line width for a 0.4 nozzle"
+            },
+            {
+              "direction": "down",
+              "delta": "\u22120.04 mm",
+              "action": "layer height for the same effect"
+            }
+          ],
+          "nextDiagnostic": "Compare bars at 0.42 and 0.48 mm width."
+        }
+      ]
+    },
+    {
+      "id": "warping",
+      "label": "Warping and corner lift",
+      "hint": "Part peels from the plate at corners",
+      "causes": [
+        {
+          "cause": "Chamber below the material's glass transition",
+          "baseWeight": 0.9,
+          "contextFlags": [
+            "needsChamber"
+          ],
+          "why": "Every layer contracts as it cools through Tg. If the part sits far below Tg, that contraction accumulates as internal stress with nowhere to go but the corners.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "chamber_temperatures to within 40\u201360 \u00b0C of the material's Tg where the printer allows"
+            },
+            {
+              "direction": "act",
+              "delta": "Enclose",
+              "action": "Close the machine and let it soak before starting"
+            }
+          ],
+          "nextDiagnostic": "Print the same footprint with the chamber cold and hot; measure corner lift with feeler gauges."
+        },
+        {
+          "cause": "Bed temperature below the material's Tg at the first layer",
+          "baseWeight": 0.75,
+          "contextFlags": [],
+          "why": "The plate has to hold the base layers above their softening point or the anchor releases before the print finishes.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+5 \u00b0C",
+              "action": "the plate-specific bed temperature key in use"
+            },
+            {
+              "direction": "set",
+              "delta": "Match",
+              "action": "hot_plate_temp_initial_layer to the running bed temperature"
+            }
+          ],
+          "nextDiagnostic": "Adhesion patch test at three bed temperatures."
+        },
+        {
+          "cause": "Cooling fan running on a warp-prone material",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "Fan accelerates the contraction that causes the stress.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u2192 0\u201315%",
+              "action": "fan_max_speed"
+            },
+            {
+              "direction": "set",
+              "delta": "\u2192 3",
+              "action": "close_fan_the_first_x_layers or more"
+            }
+          ],
+          "nextDiagnostic": "Same part with fan disabled entirely as the control."
+        },
+        {
+          "cause": "Footprint geometry concentrating stress",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "Sharp corners and thin footprints have the smallest anchor area per unit of accumulated stress.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Brim",
+              "action": "Add a brim of at least 5 mm"
+            },
+            {
+              "direction": "act",
+              "delta": "Fillet",
+              "action": "Fillet base corners in CAD if the design allows"
+            }
+          ],
+          "nextDiagnostic": "Add a brim as a diagnostic \u2014 if lift stops, the problem is anchoring, not thermal."
+        },
+        {
+          "cause": "Plate contamination",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "Skin oils are the usual culprit and defeat an otherwise correct thermal setup.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Wash",
+              "action": "Hot water and dish soap, not isopropyl alone, then dry fully"
+            }
+          ],
+          "nextDiagnostic": "Wash and repeat the identical print before changing any parameter."
+        }
+      ]
+    },
+    {
+      "id": "cracking",
+      "label": "Cracking or delamination on tall parts",
+      "hint": "Splits appear well above the plate",
+      "causes": [
+        {
+          "cause": "Thermal gradient up the build height",
+          "baseWeight": 0.9,
+          "contextFlags": [
+            "needsChamber"
+          ],
+          "why": "The base sits in warm air near the bed while the top cools in a colder zone. The accumulated differential shear finally exceeds the weld strength at some height.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "chamber_temperatures and let the machine soak for 15 minutes before the print"
+            },
+            {
+              "direction": "down",
+              "delta": "Lower",
+              "action": "bed temperature slightly once the chamber is hot, to flatten the gradient"
+            }
+          ],
+          "nextDiagnostic": "Log chamber temperature against build height on a failed print; the crack usually sits at the gradient knee."
+        },
+        {
+          "cause": "Fan cycling on small upper layers",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "As cross-section shrinks the cooling logic raises fan and lowers speed, quenching exactly the layers that are already weakest.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221220%",
+              "action": "fan_max_speed"
+            },
+            {
+              "direction": "set",
+              "delta": "On",
+              "action": "reduce_fan_stop_start_freq"
+            },
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "slow_down_layer_time so the slowdown starts earlier and more gently"
+            }
+          ],
+          "nextDiagnostic": "Inspect the slicer's per-layer fan preview at the crack height."
+        },
+        {
+          "cause": "Interlayer weld marginal from the start",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "A weld that only just holds at the bottom fails first where stress is highest.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+15 \u00b0C",
+              "action": "nozzle_temperature"
+            },
+            {
+              "direction": "up",
+              "delta": "+0.04 mm",
+              "action": "line width"
+            }
+          ],
+          "nextDiagnostic": "Snap test on a short specimen before committing to a tall print."
+        }
+      ]
+    },
+    {
+      "id": "firstlayer",
+      "label": "First layer not sticking",
+      "hint": "Lines lift or drag behind the nozzle",
+      "causes": [
+        {
+          "cause": "Wrong plate temperature key active",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "Bambu profiles carry separate temperatures for cool, engineering, textured and Supertack plates. Editing one leaves the others untouched, and the slicer uses whichever plate is selected.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Align",
+              "action": "All four plate keys, or at minimum the one for the plate installed"
+            }
+          ],
+          "nextDiagnostic": "Check the plate selected in the slicer against the plate on the machine."
+        },
+        {
+          "cause": "Plate contamination",
+          "baseWeight": 0.65,
+          "contextFlags": [],
+          "why": "Release agents and skin oils survive an isopropyl wipe.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Wash",
+              "action": "Hot water and detergent, air dry, handle by the edges afterwards"
+            }
+          ],
+          "nextDiagnostic": "Wash and repeat the identical file with no other change."
+        },
+        {
+          "cause": "First layer moving too fast for the melt to wet the plate",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "Adhesion is a wetting process and wetting takes contact time.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221230%",
+              "action": "first layer speed"
+            },
+            {
+              "direction": "up",
+              "delta": "+5 \u00b0C",
+              "action": "nozzle_temperature_initial_layer"
+            }
+          ],
+          "nextDiagnostic": "First-layer patch test at two speeds."
+        },
+        {
+          "cause": "Z offset drift",
+          "baseWeight": 0.45,
+          "contextFlags": [
+            "sudden"
+          ],
+          "why": "A knocked plate or a changed nozzle shifts the datum even on a machine that self-levels.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Recalibrate",
+              "action": "Run bed levelling and the Z offset routine after any nozzle change"
+            }
+          ],
+          "nextDiagnostic": "Run levelling, then a patch test before assuming a material problem."
+        }
+      ]
+    },
+    {
+      "id": "ringing",
+      "label": "Ringing and ghosting",
+      "hint": "Echo of a corner repeated along the wall",
+      "causes": [
+        {
+          "cause": "Acceleration or jerk above what input shaping was calibrated for",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "Input shaping cancels one resonance at one set of dynamics; raising acceleration moves the excitation outside what the filter was fitted to.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Recalibrate",
+              "action": "Re-run vibration compensation, then keep acceleration where it was measured"
+            },
+            {
+              "direction": "down",
+              "delta": "\u221220%",
+              "action": "outer wall acceleration only, leaving infill alone"
+            }
+          ],
+          "nextDiagnostic": "Ringing tower at three accelerations."
+        },
+        {
+          "cause": "Pressure advance overshoot at corners",
+          "baseWeight": 0.45,
+          "contextFlags": [],
+          "why": "An over-set k factor injects a velocity transient of its own that looks like mechanical ringing.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u22120.004",
+              "action": "k factor"
+            }
+          ],
+          "nextDiagnostic": "PA test \u2014 mechanical ringing repeats at a fixed spatial period, PA artefacts do not."
+        },
+        {
+          "cause": "Spool binding on the holder",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "A jerky feed excites the toolhead through the extruder. Rare, but it is the mechanical cause that survives good maintenance.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Check",
+              "action": "Spool spins freely; no tangle under the top wrap"
+            }
+          ],
+          "nextDiagnostic": "Print with the filament hand-fed from a loose coil as a control."
+        }
+      ]
+    },
+    {
+      "id": "overhang",
+      "label": "Poor overhangs, drooping",
+      "hint": "Underside of overhangs curls or sags",
+      "causes": [
+        {
+          "cause": "Overhang cooling not aggressive enough",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "An unsupported bead has to freeze before the next one lands on it. Bambu exposes a separate overhang fan speed and threshold for exactly this.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "overhang_fan_speed toward 100%"
+            },
+            {
+              "direction": "set",
+              "delta": "Widen",
+              "action": "overhang_fan_threshold so more of the wall counts as overhang"
+            }
+          ],
+          "nextDiagnostic": "Overhang test wedge at two fan settings."
+        },
+        {
+          "cause": "Overhang speed too high",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "The bead needs dwell time in front of the fan. Bambu's per-quarter overhang speed keys exist to slow only the unsupported portion.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "Lower",
+              "action": "filament_overhang_3_4_speed and filament_overhang_4_4_speed"
+            },
+            {
+              "direction": "set",
+              "delta": "On",
+              "action": "filament_enable_overhang_speed"
+            }
+          ],
+          "nextDiagnostic": "Compare the same wedge with overhang speed control on and off."
+        },
+        {
+          "cause": "Nozzle temperature high for the cooling available",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "A hotter bead takes longer to freeze; on an enclosed machine with limited fan this becomes the binding constraint.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221210 \u00b0C",
+              "action": "nozzle_temperature for the overhang region"
+            }
+          ],
+          "nextDiagnostic": "Temperature tower judged on the overhang face only."
+        }
+      ]
+    },
+    {
+      "id": "bridging",
+      "label": "Bridging sags or fails",
+      "hint": "Spans between supports drop",
+      "causes": [
+        {
+          "cause": "Bridge speed and flow mismatched",
+          "baseWeight": 0.75,
+          "contextFlags": [],
+          "why": "A bridge is a stretched, unsupported filament \u2014 it wants slightly less material and constant velocity.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Tune",
+              "action": "filament_bridge_speed toward 25\u201340 mm/s"
+            },
+            {
+              "direction": "down",
+              "delta": "\u22125%",
+              "action": "bridge flow"
+            }
+          ],
+          "nextDiagnostic": "Bridge test at three speeds over the longest span in the real part."
+        },
+        {
+          "cause": "Insufficient cooling on the bridge layer",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "The span has to freeze in flight; without full fan it never does.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "\u2192 100%",
+              "action": "fan on bridge layers"
+            }
+          ],
+          "nextDiagnostic": "Same bridge test with fan forced to full."
+        },
+        {
+          "cause": "Material simply too soft for the span",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "High-Tg engineering materials printed in a hot chamber stay compliant longer and bridge worse than PLA ever will.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Support",
+              "action": "Accept supports for spans past 20 mm on chamber-heated materials"
+            }
+          ],
+          "nextDiagnostic": "Bridge the same span in PLA as a control to separate material from settings."
+        }
+      ]
+    },
+    {
+      "id": "pinholes",
+      "label": "Top surface pinholes",
+      "hint": "Top layer does not close",
+      "causes": [
+        {
+          "cause": "Flow ratio slightly low",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "Top surfaces are the least forgiving place for a flow deficit because there is no wall to hide it.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+0.015",
+              "action": "filament_flow_ratio"
+            }
+          ],
+          "nextDiagnostic": "Flow calibration cube judged on the top face."
+        },
+        {
+          "cause": "Not enough top solid layers for the layer height",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "Solid thickness, not layer count, is what closes a surface.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+1",
+              "action": "top solid layers, or raise until top thickness reaches about 0.8 mm"
+            }
+          ],
+          "nextDiagnostic": "Slice preview of the top layers over sparse infill."
+        },
+        {
+          "cause": "Ironing masking a flow problem",
+          "baseWeight": 0.3,
+          "contextFlags": [],
+          "why": "Ironing can hide pinholes at low speed while leaving the underlying deficit in place.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Disable",
+              "action": "Turn ironing off while diagnosing, then re-enable"
+            }
+          ],
+          "nextDiagnostic": "Judge the surface with ironing disabled."
+        }
+      ]
+    },
+    {
+      "id": "wet",
+      "label": "Popping, steam, bubbly surface",
+      "hint": "Audible ticking, rough matte finish",
+      "causes": [
+        {
+          "cause": "Absorbed moisture",
+          "baseWeight": 0.98,
+          "contextFlags": [
+            "hygro"
+          ],
+          "why": "Water boils in the melt zone and leaves voids and a matte, fuzzy surface. In polyamides and polyesters it also cuts chains and drops strength permanently.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Dry",
+              "action": "Run the material's full drying cycle before anything else"
+            },
+            {
+              "direction": "act",
+              "delta": "Feed",
+              "action": "Print from a heated chamber or desiccated dry box for hygroscopic grades"
+            }
+          ],
+          "nextDiagnostic": "Extrude 100 mm in still air and watch for steam and bubbles. This is a two-minute confirmation."
+        },
+        {
+          "cause": "Contamination or a mixed-material clog",
+          "baseWeight": 0.25,
+          "contextFlags": [],
+          "why": "Residue from a higher-temperature material degrading in the melt zone gives a similar crackle.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Purge",
+              "action": "Purge 200 mm at the higher material's temperature, then cold pull"
+            }
+          ],
+          "nextDiagnostic": "Inspect the purge for discoloured flecks."
+        }
+      ]
+    },
+    {
+      "id": "brittle",
+      "label": "Filament snaps in the tube or on the spool",
+      "hint": "Breaks during feeding or AMS retract",
+      "causes": [
+        {
+          "cause": "Hydrolytic degradation from long humid storage",
+          "baseWeight": 0.75,
+          "contextFlags": [
+            "hygro"
+          ],
+          "why": "Polyesters and polyamides lose molecular weight when stored wet. Drying restores printability but does not undo the chain scission.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Dry",
+              "action": "Dry, then test \u2014 if it still snaps the spool is spent"
+            },
+            {
+              "direction": "act",
+              "delta": "Retire",
+              "action": "Retire the spool for structural work"
+            }
+          ],
+          "nextDiagnostic": "Bend a 100 mm length around a 50 mm radius. Clean snap means retire it."
+        },
+        {
+          "cause": "Tight winding stress on a small-core spool",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "Filament that has been held at a small bend radius for a long time embrittles at the outer wrap.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Discard",
+              "action": "Discard the outer few metres"
+            }
+          ],
+          "nextDiagnostic": "Compare the outer wrap against material from mid-spool."
+        }
+      ]
+    },
+    {
+      "id": "grinding",
+      "label": "Extruder clicking or grinding",
+      "hint": "Ticking sound, flat spot on the filament",
+      "causes": [
+        {
+          "cause": "Commanded flow above what the melt zone can supply",
+          "baseWeight": 0.85,
+          "contextFlags": [],
+          "why": "The extruder is pushing against a pressure it cannot overcome, so the gear slips. The Recommend tab computes both the flow ceiling and the force required.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "Set",
+              "action": "filament_max_volumetric_speed to the computed ceiling"
+            },
+            {
+              "direction": "up",
+              "delta": "+10 \u00b0C",
+              "action": "nozzle_temperature to drop melt viscosity"
+            }
+          ],
+          "nextDiagnostic": "Repeat the same print at 70% flow. If clicking stops, it was flow, not hardware."
+        },
+        {
+          "cause": "Partial clog raising back-pressure",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "A restriction multiplies the force needed for the same flow.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Cold pull",
+              "action": "Cold pull, then a hot purge"
+            },
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Replace the nozzle if the pull shows carbon"
+            }
+          ],
+          "nextDiagnostic": "Free-air extrusion at 5 mm\u00b3/s \u2014 if that clicks too, it is the nozzle, not the print."
+        },
+        {
+          "cause": "Too much retraction on a soft material",
+          "baseWeight": 0.45,
+          "contextFlags": [],
+          "why": "Retracting a flexible filament buckles it in the drive rather than pulling melt back.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221250%",
+              "action": "filament_retraction_length for TPU grades"
+            },
+            {
+              "direction": "down",
+              "delta": "\u221250%",
+              "action": "filament_retraction_speed"
+            }
+          ],
+          "nextDiagnostic": "Retraction tower on the flexible material specifically."
+        },
+        {
+          "cause": "Heat creep softening filament above the melt zone",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "Softened filament swells in the cold side and jams. It shows up on long prints in a hot chamber.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "Lower",
+              "action": "chamber temperature if the material tolerates it"
+            },
+            {
+              "direction": "act",
+              "delta": "Check",
+              "action": "Hotend fan running at full for the whole print"
+            }
+          ],
+          "nextDiagnostic": "Note whether failures cluster after a consistent elapsed time \u2014 that signature is heat creep, not settings."
+        }
+      ]
+    },
+    {
+      "id": "partial",
+      "label": "Flow fades then recovers mid-print",
+      "hint": "Bands of thin extrusion",
+      "causes": [
+        {
+          "cause": "Intermittent partial clog",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "A fragment cycles between blocking and clearing as pressure builds and releases.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Cold pull",
+              "action": "Several cold pulls until the pulled tip is clean and sharp"
+            },
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Replace the nozzle \u2014 intermittent clogs rarely clear for good"
+            }
+          ],
+          "nextDiagnostic": "Watch extrusion width in the first 20 layers after a nozzle swap."
+        },
+        {
+          "cause": "Heat creep on long prints",
+          "baseWeight": 0.55,
+          "contextFlags": [],
+          "why": "Warm-side temperature climbs through the print until the filament softens above the melt zone.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Check",
+              "action": "Hotend cooling fan speed and airflow path"
+            },
+            {
+              "direction": "down",
+              "delta": "Lower",
+              "action": "chamber temperature where the material allows"
+            }
+          ],
+          "nextDiagnostic": "Log the elapsed time at each fade. A repeatable interval points at thermal, not material."
+        },
+        {
+          "cause": "Filament diameter variation within the spool",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "An out-of-tolerance section under-delivers volume until it passes through.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Measure",
+              "action": "Diameter every 200 mm across several metres"
+            },
+            {
+              "direction": "set",
+              "delta": "Set",
+              "action": "filament_diameter to the measured mean"
+            }
+          ],
+          "nextDiagnostic": "Correlate the band spacing with spool circumference \u2014 a match points at the spool, not the machine."
+        }
+      ]
+    },
+    {
+      "id": "clog",
+      "label": "Complete blockage, no extrusion",
+      "hint": "Extruder skipping, nothing comes out",
+      "causes": [
+        {
+          "cause": "Carbonised deposit in the melt zone",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "Long dwell at temperature, especially after a high-temperature material, bakes residue onto the bore.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Cold pull",
+              "action": "Heat to print temperature, cool to the softening point, pull firmly"
+            },
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Replace the nozzle if two pulls do not clear it"
+            }
+          ],
+          "nextDiagnostic": "Inspect the pulled tip under magnification \u2014 a clean cone means the melt zone is clear."
+        },
+        {
+          "cause": "Material change without an adequate purge",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "A high-temperature residue will not move at the new material's temperature and blocks the path.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Purge",
+              "action": "Purge at the higher of the two materials' temperatures before switching down"
+            }
+          ],
+          "nextDiagnostic": "Standardise a purge volume when stepping down in temperature."
+        },
+        {
+          "cause": "Foreign particle from the spool",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "Dust and swarf collected on the filament path end up in the nozzle.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Filter",
+              "action": "Fit a filament dust wiper"
+            },
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Replace the nozzle"
+            }
+          ],
+          "nextDiagnostic": "Check whether the same spool blocks a second nozzle."
+        }
+      ]
+    },
+    {
+      "id": "wander",
+      "label": "Extrusion width wanders, dimensions drift",
+      "hint": "Same file prints differently week to week",
+      "causes": [
+        {
+          "cause": "Nozzle bore wear",
+          "baseWeight": 0.9,
+          "contextFlags": [
+            "abrasive",
+            "drift"
+          ],
+          "why": "Filled materials abrade the orifice steadily. The bore grows and goes out of round, so the actual line width no longer matches the commanded one.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Replace",
+              "action": "Fit a fresh nozzle; use hardened steel or carbide for any filled grade"
+            },
+            {
+              "direction": "act",
+              "delta": "Log",
+              "action": "Record kilograms through each nozzle so replacement is scheduled, not reactive"
+            }
+          ],
+          "nextDiagnostic": "Single-wall cube measured with a micrometer, logged per nozzle. A drift past 0.03 mm is the replacement trigger."
+        },
+        {
+          "cause": "Batch-to-batch filament diameter variation",
+          "baseWeight": 0.55,
+          "contextFlags": [],
+          "why": "Nominal 1.75 mm covers a real spread, and pigment loading changes it further.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Measure",
+              "action": "Ten readings per new spool"
+            },
+            {
+              "direction": "set",
+              "delta": "Set",
+              "action": "filament_diameter and filament_flow_ratio per batch, stored against the batch"
+            }
+          ],
+          "nextDiagnostic": "Log measured diameter against batch in the library and compare across lots."
+        },
+        {
+          "cause": "Ambient temperature swing",
+          "baseWeight": 0.3,
+          "contextFlags": [],
+          "why": "Shrinkage compensation is calibrated at one ambient; a workshop that swings 10 \u00b0C moves finished dimensions.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Tune",
+              "action": "filament_shrink against parts measured at a stable ambient"
+            }
+          ],
+          "nextDiagnostic": "Measure the same calibration part at both ends of the daily temperature range."
+        }
+      ]
+    },
+    {
+      "id": "dims",
+      "label": "Holes undersize, dimensions off",
+      "hint": "Parts do not fit assemblies",
+      "causes": [
+        {
+          "cause": "Hole compensation coefficients not tuned for this material",
+          "baseWeight": 0.75,
+          "contextFlags": [],
+          "why": "Bambu carries per-filament polynomial compensation for holes and outer contours; it is a material property, not a machine one.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Tune",
+              "action": "hole_coef_2 and hole_coef_3 against measured holes"
+            },
+            {
+              "direction": "set",
+              "delta": "Tune",
+              "action": "counter_coef_2 and counter_coef_3 for outer contours"
+            }
+          ],
+          "nextDiagnostic": "Print a gauge plate with holes from 3 to 20 mm, measure with pin gauges, fit the correction."
+        },
+        {
+          "cause": "Shrinkage not set for the material",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "Semi-crystalline materials shrink far more than PLA, and the amount depends on chamber temperature.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Set",
+              "action": "filament_shrink from measured parts at the chamber temperature you actually run"
+            }
+          ],
+          "nextDiagnostic": "Print a 100 mm bar, measure cold, set the ratio from the result."
+        },
+        {
+          "cause": "Over- or under-extrusion shifting every surface",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "Flow error moves outer walls out and holes in, symmetrically.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Calibrate",
+              "action": "filament_flow_ratio before touching any compensation coefficient"
+            }
+          ],
+          "nextDiagnostic": "Flow first, dimensions second. Compensations fitted on top of a flow error will not transfer."
+        },
+        {
+          "cause": "Elephant foot on the seating face",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "A squashed first layer reads as an oversize base in every measurement taken from it.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Apply",
+              "action": "Elephant foot compensation"
+            },
+            {
+              "direction": "act",
+              "delta": "Adjust",
+              "action": "Z offset for the plate in use"
+            }
+          ],
+          "nextDiagnostic": "Measure at mid-height and at the base separately to separate the two effects."
+        }
+      ]
+    },
+    {
+      "id": "zbanding",
+      "label": "Z banding, periodic horizontal lines",
+      "hint": "Regular bands at a fixed pitch",
+      "causes": [
+        {
+          "cause": "Flow pulsation from filament diameter variation",
+          "baseWeight": 0.6,
+          "contextFlags": [],
+          "why": "A diameter cycle from the extrusion line prints as a band whose pitch matches the spool geometry.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Measure",
+              "action": "Diameter along several metres; look for a repeating cycle"
+            }
+          ],
+          "nextDiagnostic": "Compare band pitch against the layers printed per spool revolution."
+        },
+        {
+          "cause": "Temperature oscillation around the setpoint",
+          "baseWeight": 0.5,
+          "contextFlags": [
+            "drift"
+          ],
+          "why": "A worn or loose thermistor or heater lets the PID hunt, and viscosity follows it.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Check",
+              "action": "Log nozzle temperature during a print and look for swing beyond \u00b12 \u00b0C"
+            },
+            {
+              "direction": "act",
+              "delta": "Retune",
+              "action": "Re-run hotend PID tuning"
+            }
+          ],
+          "nextDiagnostic": "Temperature log across ten minutes of steady printing."
+        },
+        {
+          "cause": "Lead screw or Z artefact",
+          "baseWeight": 0.3,
+          "contextFlags": [
+            "mech"
+          ],
+          "why": "On a maintained machine this is unlikely, but a band pitch exactly matching the Z screw lead is diagnostic.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Measure",
+              "action": "Band pitch against the Z lead"
+            }
+          ],
+          "nextDiagnostic": "If the pitch matches the screw lead exactly, it is mechanical; otherwise it is not."
+        }
+      ]
+    },
+    {
+      "id": "shift",
+      "label": "Layer shift",
+      "hint": "Print offsets partway up",
+      "causes": [
+        {
+          "cause": "Collision with a curled part or lifted corner",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "On a maintained machine the overwhelmingly common shift is the toolhead hitting something the print itself created.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "Z hop, and set filament_z_hop_types to a spiral or slope lift"
+            },
+            {
+              "direction": "act",
+              "delta": "Fix",
+              "action": "Address the warping first \u2014 see corner lift"
+            }
+          ],
+          "nextDiagnostic": "Inspect the part at the shift height for a raised edge on the side the shift moved toward."
+        },
+        {
+          "cause": "Acceleration above what the part mass supports",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "A tall part with a small footprint can be knocked by its own inertia.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u221225%",
+              "action": "acceleration for tall parts"
+            }
+          ],
+          "nextDiagnostic": "Reprint at reduced acceleration as the control."
+        },
+        {
+          "cause": "Belt or carriage fault",
+          "baseWeight": 0.2,
+          "contextFlags": [
+            "mech"
+          ],
+          "why": "Listed last deliberately \u2014 on a serviced machine this is rare, and the two causes above account for most shifts.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Check",
+              "action": "Belt tension and carriage play at the next scheduled service"
+            }
+          ],
+          "nextDiagnostic": "Only pursue after collision and acceleration have been excluded."
+        }
+      ]
+    },
+    {
+      "id": "colour",
+      "label": "Colour or gloss differs between batches",
+      "hint": "Same SKU, visibly different parts",
+      "causes": [
+        {
+          "cause": "Pigment loading varies between lots",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "Pigment changes both the melt rheology and the surface reflectivity. It is a real property of the batch, not an error.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Record",
+              "action": "Store the batch code against every spool and keep matched batches for one job"
+            },
+            {
+              "direction": "set",
+              "delta": "Recalibrate",
+              "action": "filament_flow_ratio per batch \u2014 heavily pigmented lots often need a different value"
+            }
+          ],
+          "nextDiagnostic": "Print a swatch from each batch under the same settings and keep them with the spools."
+        },
+        {
+          "cause": "Different effective print temperature",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "Gloss on many materials tracks melt temperature closely; 10 \u00b0C is visible.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Match",
+              "action": "nozzle_temperature across the batches being mixed"
+            }
+          ],
+          "nextDiagnostic": "Swatches at 240, 250 and 260 to see the gloss response for the material."
+        },
+        {
+          "cause": "Cooling difference changing surface texture",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "Faster cooling freezes a rougher surface and reads as a colour change.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Match",
+              "action": "fan_min_speed and fan_max_speed between the jobs"
+            }
+          ],
+          "nextDiagnostic": "Swatches at matched fan settings."
+        }
+      ]
+    },
+    {
+      "id": "purge",
+      "label": "Colour bleed after a filament change",
+      "hint": "Streaks of the previous colour",
+      "causes": [
+        {
+          "cause": "Purge volume too low for the colour transition",
+          "baseWeight": 0.85,
+          "contextFlags": [],
+          "why": "Purge requirement scales with the melt-zone volume and with how far the transition goes \u2014 dark into light is the worst case.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "filament_prime_volume and filament_minimal_purge_on_wipe_tower for dark-to-light steps"
+            },
+            {
+              "direction": "set",
+              "delta": "Order",
+              "action": "Sequence colours light to dark where the model allows"
+            }
+          ],
+          "nextDiagnostic": "Print a transition swatch and count the layers until the new colour is clean."
+        },
+        {
+          "cause": "Purge temperature too low to shift residue",
+          "baseWeight": 0.45,
+          "contextFlags": [],
+          "why": "A cold purge leaves film on the melt-zone wall that bleeds for many more layers.",
+          "fixes": [
+            {
+              "direction": "set",
+              "delta": "Set",
+              "action": "filament_flush_temp toward the higher of the two materials"
+            }
+          ],
+          "nextDiagnostic": "Same swatch with the flush temperature raised 15 \u00b0C."
+        },
+        {
+          "cause": "Melt-zone volume larger than the profile assumes",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "A high-flow hotend holds materially more melt than the stock one the purge default was written for.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Scale",
+              "action": "Purge volumes by the ratio of melt-zone volumes shown in the Hotends tab"
+            }
+          ],
+          "nextDiagnostic": "Compare the computed melt-zone volume against the profile's purge volume."
+        }
+      ]
+    },
+    {
+      "id": "support",
+      "label": "Supports fuse to the part",
+      "hint": "Supports will not separate cleanly",
+      "causes": [
+        {
+          "cause": "Support interface gap too small for this material",
+          "baseWeight": 0.7,
+          "contextFlags": [],
+          "why": "Materials that stay soft longer bond across a gap that works fine for PLA.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "+0.05 mm",
+              "action": "top Z distance for support interface"
+            },
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "interface line spacing"
+            }
+          ],
+          "nextDiagnostic": "Support test block at two gaps in the material actually being used."
+        },
+        {
+          "cause": "Insufficient cooling at the interface",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "A hot interface layer welds instead of resting.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "fan on interface layers"
+            }
+          ],
+          "nextDiagnostic": "Compare the same block with interface cooling raised."
+        },
+        {
+          "cause": "Same material used for support where a release material is available",
+          "baseWeight": 0.45,
+          "contextFlags": [
+            "multi"
+          ],
+          "why": "On a multi-material machine an interface in a non-bonding material removes the problem rather than tuning around it.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Switch",
+              "action": "Use a dedicated support or soluble interface material"
+            }
+          ],
+          "nextDiagnostic": "One interface layer in the release material is usually enough."
+        }
+      ]
+    },
+    {
+      "id": "knock",
+      "label": "Part knocked loose, spaghetti",
+      "hint": "Print detaches mid-job",
+      "causes": [
+        {
+          "cause": "Adhesion lost to warping before the knock",
+          "baseWeight": 0.75,
+          "contextFlags": [],
+          "why": "Almost every knock-off starts as a lifted corner. Fix the lift and the knock disappears.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Diagnose",
+              "action": "Work the corner-lift path first"
+            },
+            {
+              "direction": "act",
+              "delta": "Brim",
+              "action": "Brim of 5 mm or more as an interim measure"
+            }
+          ],
+          "nextDiagnostic": "Inspect the base of the detached part for a curled edge."
+        },
+        {
+          "cause": "Small footprint relative to height",
+          "baseWeight": 0.5,
+          "contextFlags": [],
+          "why": "The overturning moment grows with height while the anchor stays the same size.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Brim",
+              "action": "Add a brim"
+            },
+            {
+              "direction": "down",
+              "delta": "\u221225%",
+              "action": "acceleration"
+            }
+          ],
+          "nextDiagnostic": "Reprint with a brim and reduced acceleration as a pair."
+        },
+        {
+          "cause": "Plate contamination in a local patch",
+          "baseWeight": 0.35,
+          "contextFlags": [],
+          "why": "A fingerprint under one corner is enough.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Wash",
+              "action": "Full plate wash with detergent"
+            }
+          ],
+          "nextDiagnostic": "Note whether failures recur at the same plate position."
+        }
+      ]
+    },
+    {
+      "id": "scrape",
+      "label": "Nozzle knocks or scrapes on infill",
+      "hint": "Ticking as the head crosses printed area",
+      "causes": [
+        {
+          "cause": "Over-extrusion raising the deposited height",
+          "baseWeight": 0.8,
+          "contextFlags": [],
+          "why": "Each layer lands slightly proud, and the error accumulates until the nozzle touches it.",
+          "fixes": [
+            {
+              "direction": "down",
+              "delta": "\u22120.02",
+              "action": "filament_flow_ratio"
+            },
+            {
+              "direction": "set",
+              "delta": "Enable",
+              "action": "Z hop over printed regions as an interim measure"
+            }
+          ],
+          "nextDiagnostic": "Flow calibration cube. If the top face is proud, this is the cause."
+        },
+        {
+          "cause": "Infill peaks from an aggressive pattern",
+          "baseWeight": 0.45,
+          "contextFlags": [],
+          "why": "Some patterns cross themselves and stack material at the crossings.",
+          "fixes": [
+            {
+              "direction": "act",
+              "delta": "Change",
+              "action": "Switch to a non-crossing infill pattern"
+            },
+            {
+              "direction": "set",
+              "delta": "On",
+              "action": "Ironing or infill combination off while diagnosing"
+            }
+          ],
+          "nextDiagnostic": "Same part with a different infill pattern."
+        },
+        {
+          "cause": "Curling on the previous layer",
+          "baseWeight": 0.4,
+          "contextFlags": [],
+          "why": "A curled edge is above nominal height even at correct flow.",
+          "fixes": [
+            {
+              "direction": "up",
+              "delta": "Raise",
+              "action": "overhang_fan_speed"
+            },
+            {
+              "direction": "down",
+              "delta": "Lower",
+              "action": "overhang speed"
+            }
+          ],
+          "nextDiagnostic": "Look at where the knocking happens \u2014 over overhangs points at curl, over solid infill points at flow."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+[
+  {
+    "boxes": [
+      {
+        "h": 41,
+        "selector": "#r-mat",
+        "text": "Select a specific spool or a generic material before comparing settings.",
+        "title": "Choose material",
+        "w": 316,
+        "x": 412,
+        "y": 308.5
+      },
+      {
+        "h": 41,
+        "selector": "#r-hotend",
+        "text": "Use the nozzle and hotend that will actually print the part.",
+        "title": "Match the hotend",
+        "w": 316,
+        "x": 412,
+        "y": 442
+      },
+      {
+        "h": 43.5,
+        "selector": "#btn-savecfg",
+        "text": "Save a named configuration, then compare alternatives in Compare.",
+        "title": "Keep the comparison",
+        "w": 160.96875,
+        "x": 1483.03125,
+        "y": 112.5
+      }
+    ],
+    "height": 1408,
+    "width": 2055,
+    "title": "Actual tool · controls at a glance",
+    "caption": "Actual application screenshot. Numbered boxes point to the controls described below. ",
+    "key": "parts-bench"
+  },
+  {
+    "boxes": [
+      {
+        "h": 52,
+        "selector": "#mat",
+        "text": "These affect the example settings; they are not a measured calibration.",
+        "title": "Match material and nozzle",
+        "w": 260,
+        "x": 318,
+        "y": 369.703125
+      },
+      {
+        "h": 59.1875,
+        "selector": "#launch",
+        "text": "It waits until the dummy filament, bed and sliced-file checks are complete.",
+        "title": "Try the guarded launch",
+        "w": 260,
+        "x": 318,
+        "y": 674.703125
+      },
+      {
+        "h": 532.9375,
+        "selector": "#result",
+        "text": "This printer is fictional. No machine or slicer receives a command.",
+        "title": "Track the job outcome",
+        "w": 517.078125,
+        "x": 1228.90625,
+        "y": 315.703125
+      }
+    ],
+    "height": 1408,
+    "width": 2055,
+    "key": "simulation",
+    "title": "Try the working offline example",
+    "caption": "Screenshot of this project’s interactive demo. Side-by-side services are explicitly simulated.",
+    "cropHeight": 889.640625
+  }
+]

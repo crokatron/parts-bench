@@ -1,0 +1,84 @@
+{
+  "slug": "parts-bench",
+  "title": "Parts Bench",
+  "summary": "Keep a traceable library of printed parts, versions, spools, batches, hotends and print records. Compare computed starting settings, investigate print symptoms and retain the exact configuration used for an attempt. The newer NAS print-job integration is distinct from the established library and remains deployment/version dependent.",
+  "features": [
+    [
+      "Spool library",
+      "Track brand, type, colour, batch, condition, quality and measured flow.",
+      "Library and workflow"
+    ],
+    [
+      "Part versions",
+      "Store model files and extracted 3MF/STL metadata without losing version identity.",
+      "Library and workflow"
+    ],
+    [
+      "Recommendations",
+      "Show calculated settings and substituted arithmetic based on material, hotend and goals.",
+      "Library and workflow"
+    ],
+    [
+      "Compare",
+      "Save configurations side by side and highlight differing values.",
+      "Library and workflow"
+    ],
+    [
+      "Diagnose",
+      "Rank possible causes for selected symptoms under the stated maintenance assumptions.",
+      "Library and workflow"
+    ],
+    [
+      "Print history",
+      "Link part version, exact spool/batch and hotend to a frozen settings snapshot.",
+      "Library and workflow"
+    ],
+    [
+      "Storage and audit",
+      "Review file inventory, imports, fingerprints and field-level change history.",
+      "Library and workflow"
+    ],
+    [
+      "NAS print jobs",
+      "Where configured, separate immutable sliced jobs from physical launch attempts and filament selection.",
+      "Library and workflow"
+    ]
+  ],
+  "workflows": [
+    [
+      "Create traceable material and part records",
+      [
+        "Start in Library. Add a spool or import a supported filament profile; record the batch instead of treating all spools of a product as interchangeable.",
+        "In Parts, upload the intended STL or 3MF and review extracted metadata and preview. Keep a new revision as a version, not an unrelated overwrite.",
+        "Review printer/nozzle and part bounds when present. A model-only file is not a ready-to-launch sliced job."
+      ]
+    ],
+    [
+      "Compare a starting configuration",
+      [
+        "Open Recommend. Choose the specific spool or generic material, printer, hotend/nozzle and goal. Enter layer height, width and the representative part dimensions/path values.",
+        "Read the operating point and physics/cooling checks. Expand the derivation rather than treating the output as a measured calibration.",
+        "Save as configuration, change one assumption and save another named configuration. Use Compare to see the differences.",
+        "Validate the proposed settings on a suitable test before using them for an important production part."
+      ]
+    ],
+    [
+      "Record a print and investigate a failure",
+      [
+        "Create a print record against the exact part version and spool batch used, retaining the hotend and settings snapshot.",
+        "Use Diagnose with the actual observed symptom; inspect ranked causes in the context of the assumed maintained machine.",
+        "Record the result and any measured changes. A later edit to a spool or recommendation should not rewrite what was used for an earlier print."
+      ]
+    ],
+    [
+      "Use integrated print jobs only when configured",
+      [
+        "Open Print jobs and inspect the sliced-file identity, target printer and filament requirements. Library upload alone does not imply a physical launch.",
+        "Resolve missing or ambiguous loaded-spool matches and confirm the actual bed, plate, material and nozzle before dispatch.",
+        "Treat uncertain launch results as uncertain. Do not automatically retry a command that may already have started a machine.",
+        "The demo’s printer panel is simulated. This documentation update does not launch a real printer or establish the live integration’s current readiness."
+      ]
+    ]
+  ],
+  "limits": "Source was split from a private checkpoint while print-job integration was still evolving. Read the retained implementation notes before deploying. This is not a clean-machine or physical-print validation of the newer integration."
+}
