@@ -12,4 +12,4 @@ Versioned model library, physical filament batches, parameter recommendations, d
 
 **Next maintainer action:** Reconcile the newer working NAS changes before the next source refresh. Test safe import/rename, revisions, exact loaded spool and job guards on fixtures. Never start a real print as a routine test. Historical September no-login/no-dependencies claims describe the old local build, not the current authenticated NAS system.
 
-**Status:** private upload verified on 14 October 2026. These guides accompany the private source package. Live runtime, data backups and full recovery were not retested. Public release needs separate approval.
+**Status:** private upload verified on 14 October 2026. These guides accompany the source package. Live runtime, data backups and full recovery were not retested. Public sharing was authorised on 14 October 2026; the NAS backup remains private.

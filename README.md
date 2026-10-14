@@ -4,7 +4,9 @@
 
 Keep a traceable library of printed parts, versions, spools, batches, hotends and print records. Compare computed starting settings, investigate print symptoms and retain the exact configuration used for an attempt. The newer NAS print-job integration is distinct from the established library and remains deployment/version dependent.
 
-**Private preview · not published.**
+[Publication checks and remaining limits](docs/PUBLICATION.md)
+
+**Public source preview · MIT for original contributions.**
 
 [Open the visual manual](docs/USER-MANUAL.md) · [Download the self-contained demo](demo.html) · [Release notes](CHANGELOG.md)
 
