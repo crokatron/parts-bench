@@ -1,3 +1,7 @@
+> **Historical September base-library document.** The original text below is preserved as history. Its runtime, no-login, dependency and deployment claims are superseded for the NAS edition. Continue with the [current summary](../../docs/START-HERE.md) and [current handover](../../docs/HANDOVER.md), checked 14 October 2026.
+
+---
+
 # START HERE — Parts Bench handover
 
 You are picking up a working project. Read this file first; it is written to

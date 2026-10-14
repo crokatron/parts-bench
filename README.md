@@ -1,5 +1,7 @@
 # Parts Bench
 
+**Maintaining this project? [Start here](docs/START-HERE.md) · [Detailed handover](docs/HANDOVER.md)**
+
 Keep a traceable library of printed parts, versions, spools, batches, hotends and print records. Compare computed starting settings, investigate print symptoms and retain the exact configuration used for an attempt. The newer NAS print-job integration is distinct from the established library and remains deployment/version dependent.
 
 **Private preview · not published.**
@@ -12,7 +14,7 @@ Download `demo.html` using GitHub’s Download raw file control, then open it in
 
 ### Actual tool · controls at a glance
 
-Actual application screenshot. Numbered boxes point to the controls described below. 
+Actual application screenshot. Numbered boxes point to the controls described below.
 
 ![Parts Bench — numbered controls](docs/images/guide-1.jpg)
 
